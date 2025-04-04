@@ -1,0 +1,21 @@
+---
+title: "Lab 6: Machine Learning in Hyrdology"
+subtitle: 'Introduction to Statistics in R'
+author:
+  - name: Madi Schartz
+    email: "mmschartz04@gmail.com"
+date: "2025-04-04"
+format: html
+execute: 
+  echo: true
+---
+
+```{r}
+library(tidyverse)
+library(tidymodels)
+library(powerjoin)
+library(glue)
+library(vip)
+library(baguette)
+```
+
