@@ -436,3 +436,99 @@ test_data <- bake(prepared_rec, new_data = NULL)
 
 ```
 
+## Define 3 models
+
+```{r}
+# Define a random forest model using the rand_forest function setting the engine to ranger and the mode to regression
+
+rf_model <- rand_forest() %>%
+  set_engine("ranger") %>%
+  set_mode("regression")
+
+
+#Define two other models of your choice (the two I wanted to move forward with in question 3)
+
+xgbm_model <- boost_tree() %>%
+  set_engine("xgboost") %>%
+  set_mode("regression")
+
+lg_model <- linear_reg() %>%
+  set_engine("lm") %>%
+  set_mode("regression")
+
+```
+
+## Workflow set ()
+
+```{r}
+
+#Create a workflow object : Add the recipes, models, and fit them to the re-samples 
+
+rf_wf <- workflow() |>
+  add_recipe(rec) |>
+  add_model(rf_model)
+rf_results <- fit_resamples(rf_wf, resamples = cv_folds)
+
+xgbm_wf <- workflow() |>
+  add_recipe(rec) |>
+  add_model(xgbm_model)
+xgbm_results <- fit_resamples(xgbm_wf, resamples = cv_folds)
+
+lg_wf <- workflow() |>
+  add_recipe(rec) |>
+  add_model(lg_model)
+lg_results <- fit_resamples(lg_wf, resamples = cv_folds)
+
+```
+
+
+## Evaluation 
+
+```{r}
+
+# Use autoplot and rank_results to compare the models.
+
+wf <- workflow_set(list(rec), list(rf_model, lg_model, xgbm_model)) %>%
+  workflow_map('fit_resamples', resamples = camels_cv) 
+
+autoplot(wf)
+
+rank_results(wf, rank_metric = "rsq", select_best = TRUE)
+
+# Describe what model you think is best and why!
+
+# I think that the random forest tree model is the best since it had outperformed the other two models seen by the workflow rank. 
+```
+
+
+## Extract and Evaluate 
+
+```{r}
+# Build a workflow (not workflow set) with your favorite model, recipe, and training data (use fit)
+
+final_wf <- workflow() |>
+  add_recipe(rec) |>
+  add_model(rf_model) |>
+  fit(data = train_camels)
+
+
+#Use augment to make predictions on the test data
+
+final_wf_data <- augment(final_wf, new_data = camels_test)
+
+# Create a plot of the observed vs predicted values with clear title, axis labels, and a compelling color scale
+
+ggplot(final_wf_data, aes(x = .pred, y = logQmean, colour = logQmean)) +
+  geom_point() + 
+  geom_abline(slope = 1, intercept = 0, color = "blue", linetype = "dashed") +
+  labs(title = "Observed vs Predicted Values",
+       x = "Predicted logQmean",
+       y = "Observed logQmean") +
+  scale_color_gradient2(low = "maroon", mid = "lightblue", high = "darkblue")
+
+# Describe what you think of the result
+
+# I think that the model is pretty accurate given the plot shows the ratio between our observed and predicted values following closely to the 1:1 ratio. 
+
+```
+
