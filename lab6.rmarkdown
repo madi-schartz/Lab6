@@ -10,7 +10,11 @@ execute:
   echo: true
 ---
 
+
+
 ## Lab Set Up
+
+
 
 ```{r}
 # Load in the necessary packages 
@@ -26,7 +30,11 @@ library(ggpubr)
 
 ```
 
+
+
 ## Data Download 
+
+
 
 ```{r}
 # Load in the data
@@ -63,12 +71,16 @@ camels <- power_full_join(camels ,by = 'gauge_id')
 
 ```
 
+
+
 # Question 1 : From the documentation PDF, report what zero_q_freq represents.
 
 The zero_q_frequency represents the days where Q (daily discharge) is equal to 0 mm/day.  
 
 
 ## Exploratory Data Analysis 
+
+
 
 ```{r}
 
@@ -82,7 +94,11 @@ ggplot(data = camels, aes(x = gauge_lon, y = gauge_lat)) +
 
 ```
 
+
+
 # Question 2 : Model Preperation
+
+
 
 ```{r}
 p1 <- ggplot(data = camels, aes(x = gauge_lon, y = gauge_lat)) +
@@ -105,7 +121,11 @@ ggarrange(p1, p2, ncol = 2)
 ```
 
 
+
+
 ## Model Preperation : Visual EDA
+
+
 
 ```{r}
 
@@ -163,7 +183,11 @@ ggplot(camels, aes(x = aridity, y = p_mean)) +
 ```
 
 
+
+
 ## Model Building 
+
+
 
 ```{r}
 
@@ -185,7 +209,11 @@ camels_test  <- testing(camels_split)
 camels_cv <- vfold_cv(camels_train, v = 10)
 ```
 
+
+
 ## Preprocessor : recipe
+
+
 
 ```{r}
 
@@ -215,7 +243,11 @@ test_data$lm_pred <- predict(lm_base, newdata = test_data)
 
 ```
 
+
+
 ## Model Evaluation : Statistical and Visual
+
+
 
 ```{r}
 
@@ -237,7 +269,11 @@ ggplot(test_data, aes(x = logQmean, y = lm_pred, colour = aridity)) +
        color = "Aridity")
 ```
 
+
+
 ## Workflow 
+
+
 
 ```{r}
 # Define model
@@ -265,7 +301,11 @@ summary(lm_base)$coefficients
 
 ```
 
+
+
 ## Making Predictions 
+
+
 
 ```{r}
 
@@ -276,7 +316,11 @@ dim(lm_data)
 
 ```
 
+
+
 ## Model Evaluation : Statistical and Visual
+
+
 
 ```{r}
 
@@ -295,9 +339,13 @@ ggplot(lm_data, aes(x = logQmean, y = .pred, colour = aridity)) +
 ```
 
 
+
+
 # Question 3: Your Turn!
 
 ## Build a xgboost (engine) regression (mode) model using boost_tree 
+
+
 ```{r}
 
 xgBoost_model <- boost_tree(mode = "regression",
@@ -306,7 +354,11 @@ xgBoost_model <- boost_tree(mode = "regression",
 
 ```
 
+
+
 ## Build a neural network model using the nnet engine from the baguette package using the bag_mlp function
+
+
 
 ```{r}
 
@@ -315,7 +367,11 @@ NeuralNet_Model <- bag_mlp(mode = "regression") |>
 
 ```
 
+
+
 ## Add this to the above workflow
+
+
 
 ```{r}
 
@@ -333,7 +389,11 @@ NeuralNet_Model_wf <- workflow() |>
 
 ```
 
+
+
 ## Evaluate the model and compare it to the linear and random forest models
+
+
 
 ```{r}
 # use metrics function to extract metrics
@@ -359,6 +419,8 @@ ggplot(NeuralNet_Model_wf, aes(x = logQmean, y = .pred, colour = aridity)) +
 
 ```
 
+
+
 ## Which of the 4 models would you move forward with?
 
 I would probably move forward with either the random forest model since it was outperforming the linear regression model in the workflow rank, or I would do the boosted tree model as the results are right on the 1:1 line. 
@@ -366,6 +428,8 @@ I would probably move forward with either the random forest model since it was o
 # Question 4 : Build your own
 
 ## Data Splitting 
+
+
 
 ```{r}
 
@@ -393,7 +457,11 @@ cv_folds
 
 ```
 
+
+
 ## Recipe
+
+
 
 ```{r}
 
@@ -427,7 +495,11 @@ test_data <- bake(prepared_rec, new_data = NULL)
 
 ```
 
+
+
 ## Define 3 models
+
+
 
 ```{r}
 # Define a random forest model using the rand_forest function setting the engine to ranger and the mode to regression
@@ -449,7 +521,11 @@ lg_model <- linear_reg() %>%
 
 ```
 
+
+
 ## Workflow set ()
+
+
 
 ```{r}
 
@@ -473,7 +549,11 @@ lg_results <- fit_resamples(lg_wf, resamples = cv_folds)
 ```
 
 
+
+
 ## Evaluation 
+
+
 
 ```{r}
 
@@ -492,7 +572,11 @@ rank_results(wf, rank_metric = "rsq", select_best = TRUE)
 ```
 
 
+
+
 ## Extract and Evaluate 
+
+
 
 ```{r}
 # Build a workflow (not workflow set) with your favorite model, recipe, and training data (use fit)
