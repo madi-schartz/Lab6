@@ -10,6 +10,8 @@ execute:
   echo: true
 ---
 
+## Lab Set Up
+
 ```{r}
 # Load in the necessary packages 
 
@@ -19,9 +21,11 @@ library(powerjoin)
 library(glue)
 library(vip)
 library(baguette)
+library(ggplot2)
 
 ```
 
+## Data Download 
 
 ```{r}
 # Load in the data
@@ -30,7 +34,51 @@ root  <- 'https://gdex.ucar.edu/dataset/camels/file'
 
 # Documentation PDF 
 
-download.file('https://gdex.ucar.edu/dataset/camels/file/camels_attributes_v2.0.pdf', 
-              'data/camels_attributes_v2.0.pdf')
+download.file('https://gdex.ucar.edu/dataset/camels/file/camels_attributes_v2.0.pdf', 'data/camels_attributes_v2.0.pdf')
+
+# Vector storing data types/files
+
+types <- c("clim", "geol", "soil", "topo", "vege", "hydro")
+
+# Where the files live online ...
+
+remote_files  <- glue('{root}/camels_{types}.txt')
+
+# Where we want to download the data ...
+
+local_files   <- glue('data/camels_{types}.txt')
+
+# Download more data
+
+walk2(remote_files, local_files, download.file, quiet = TRUE)
+
+# Read and merge data
+
+camels <- map(local_files, read_delim, show_col_types = FALSE) 
+
+# Full join of data
+
+camels <- power_full_join(camels ,by = 'gauge_id')
+
+```
+
+## Question 1 : From the documentation PDF, report what zero_q_freq represents
+```{r}
+
+```
+
+## Exploratory Data Analysis 
+
+```{r}
+
+# Map of the sites
+
+ggplot(data = camels, aes(x = gauge_lon, y = gauge_lat)) +
+  borders("state", colour = "gray50") +
+  geom_point(aes(color = q_mean)) +
+  scale_color_gradient(low = "lightblue", high = "darkblue") +
+  ggthemes::theme_map()
+
+
 ```
 
