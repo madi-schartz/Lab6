@@ -62,10 +62,10 @@ camels <- power_full_join(camels ,by = 'gauge_id')
 
 ```
 
-## Question 1 : From the documentation PDF, report what zero_q_freq represents
-```{r}
+## Question 1 : From the documentation PDF, report what zero_q_freq represents.
 
-```
+The zero_q_frequency represents the days where Q (daily discharge) is equal to 0 mm/day.  
+
 
 ## Exploratory Data Analysis 
 
@@ -79,28 +79,32 @@ ggplot(data = camels, aes(x = gauge_lon, y = gauge_lat)) +
   scale_color_gradient(low = "lightblue", high = "darkblue") +
   ggthemes::theme_map()
 
-# Map using aridity and p_mean of the sites
-
-ggplot(data = camels, aes(x = gauge_lon, y = gauge_lat)) +
-  borders("state", colour = "gray50") +
-  geom_point(aes(color = p_mean)) +
-  scale_color_gradient(low = "lightpink", high = "darkred") +
-  ggthemes::theme_map()
-
 ```
 
-## Model Preperation 
+## Question 2 : Model Preperation
 
 ```{r}
+p1 <- ggplot(data = camels, aes(x = gauge_lon, y = gauge_lat)) +
+  borders("state", colour = "gray50") +
+  geom_point(aes(color = aridity)) +
+  scale_color_gradient(low = "lightgreen", high = "darkred") +
+  labs(x = "Longitude", y = "Latitude", title = "Aridity Levels Across America") + 
+  ggthemes::theme_map()
 
-# Initial analysis of the three variables
+p2 <- ggplot(data = camels, aes(x = gauge_lon, y = gauge_lat)) +
+  borders("state", colour = "gray50") +
+  geom_point(aes(color = p_mean)) +
+  scale_color_gradient(low = "lightblue", high = "darkblue") +
+  labs(x = "Longitude", y = "Latitude", title = "Mean Daily Precipitation Across America") + 
+  ggthemes::theme_map()
 
-camels |> 
-  select(aridity, p_mean, q_mean) |> 
-  drop_na() |> 
-  cor()
+ggarrange(p1, p2, ncol = 2)
+```
 
-## Visual EDA
+
+## Model Preperation : Visual EDA
+
+```{r}
 
 # Create a scatter plot of aridity vs rainfall
 ggplot(camels, aes(x = aridity, y = p_mean)) +
@@ -155,6 +159,7 @@ ggplot(camels, aes(x = aridity, y = p_mean)) +
 
 ```
 
+
 ## Model Building 
 
 ```{r}
@@ -175,5 +180,81 @@ camels_train <- training(camels_split)
 camels_test  <- testing(camels_split)
 
 camels_cv <- vfold_cv(camels_train, v = 10)
+```
+
+## Preprocessor : recipe
+
+```{r}
+
+# Create a recipe to preprocess the data
+
+rec <-  recipe(logQmean ~ aridity + p_mean, data = camels_train) %>%
+  # Log transform the predictor variables (aridity and p_mean)
+  step_log(all_predictors()) %>%
+  # Add an interaction term between aridity and p_mean
+  step_interact(terms = ~ aridity:p_mean) |> 
+  # Drop any rows with missing values in the pred
+  step_naomit(all_predictors(), all_outcomes())
+
+# Naive base lm approach 
+
+# Prepare the data
+baked_data <- prep(rec, camels_train) |> 
+  bake(new_data = NULL)
+
+lm_base <- lm(logQmean ~ aridity * p_mean, data = baked_data)
+summary(lm_base)
+
+# Correctly evaluate the model 
+
+test_data <-  bake(prep(rec), new_data = camels_test)
+test_data$lm_pred <- predict(lm_base, newdata = test_data)
+
+```
+
+## Model Evaluation : Statistical and Visual
+
+```{r}
+
+metrics(test_data, truth = logQmean, estimate = lm_pred)
+
+ggplot(test_data, aes(x = logQmean, y = lm_pred, colour = aridity)) +
+  # Apply a gradient color scale
+  scale_color_gradient2(low = "brown", mid = "orange", high = "darkgreen") +
+  geom_point() +
+  geom_abline(linetype = 2) +
+  theme_linedraw() + 
+  labs(title = "Linear Model: Observed vs Predicted",
+       x = "Observed Log Mean Flow",
+       y = "Predicted Log Mean Flow",
+       color = "Aridity")
+```
+
+## Workflow 
+
+```{r}
+# Define model
+lm_model <- linear_reg() %>%
+  # define the engine
+  set_engine("lm") %>%
+  # define the mode
+  set_mode("regression")
+
+# Instantiate a workflow ...
+lm_wf <- workflow() %>%
+  # Add the recipe
+  add_recipe(rec) %>%
+  # Add the model
+  add_model(lm_model) %>%
+  # Fit the model to the training data
+  fit(data = camels_train) 
+
+# Extract the model coefficients from the workflow
+
+summary(extract_fit_engine(lm_wf))$coefficients
+
+# From the base implementation
+summary(lm_base)$coefficients
+
 ```
 
