@@ -62,7 +62,7 @@ camels <- power_full_join(camels ,by = 'gauge_id')
 
 ```
 
-## Question 1 : From the documentation PDF, report what zero_q_freq represents.
+# Question 1 : From the documentation PDF, report what zero_q_freq represents.
 
 The zero_q_frequency represents the days where Q (daily discharge) is equal to 0 mm/day.  
 
@@ -81,7 +81,7 @@ ggplot(data = camels, aes(x = gauge_lon, y = gauge_lat)) +
 
 ```
 
-## Question 2 : Model Preperation
+# Question 2 : Model Preperation
 
 ```{r}
 p1 <- ggplot(data = camels, aes(x = gauge_lon, y = gauge_lat)) +
@@ -302,9 +302,9 @@ autoplot(wf)
 rank_results(wf, rank_metric = "rsq", select_best = TRUE)
 ```
 
-## Question 3: Your Turn!
+# Question 3: Your Turn!
 
-# Build a xgboost (engine) regression (mode) model using boost_tree 
+## Build a xgboost (engine) regression (mode) model using boost_tree 
 ```{r}
 
 xgBoost_model <- boost_tree(mode = "regression",
@@ -313,7 +313,7 @@ xgBoost_model <- boost_tree(mode = "regression",
 
 ```
 
-# Build a neural network model using the nnet engine from the baguette package using the bag_mlp function
+## Build a neural network model using the nnet engine from the baguette package using the bag_mlp function
 
 ```{r}
 
@@ -322,9 +322,52 @@ NeuralNet_Model <- bag_mlp(mode = "regression") |>
 
 ```
 
-# Add this to the above workflow
+## Add this to the above workflow
 
 ```{r}
 
+xgbm_wf <- workflow() |>
+  add_recipe(rec) |>
+  add_model(xgBoost_model) |>
+  fit(data = camels_train) |>
+  augment(camels_train)
+  
+NeuralNet_Model_wf <- workflow() |>
+  add_recipe(rec) |>
+  add_model(xgBoost_model) |>
+  fit(data = camels_train) |>
+  augment(camels_train)
+
 ```
 
+## Evaluate the model and compare it to the linear and random forest models
+
+```{r}
+# use metrics function to extract metrics
+
+metrics(xgbm_wf, truth = logQmean, estimate = .pred)
+
+metrics(NeuralNet_Model_wf, truth = logQmean, estimate = .pred)
+
+# build the plots to compare 
+
+ggplot(xgbm_wf, aes(x = logQmean, y = .pred, colour = aridity)) +
+  scale_color_viridis_c() +
+  geom_point() +
+  geom_abline() +
+  theme_linedraw()
+
+ggplot(NeuralNet_Model_wf, aes(x = logQmean, y = .pred, colour = aridity)) +
+  scale_color_viridis_c() +
+  geom_point() +
+  geom_abline() +
+  theme_linedraw()
+
+autoplot(wf)
+
+
+```
+
+## Which of the 4 models would you move forward with?
+
+I would probably move forward with either the random forest model since it was outperforming the linear regression model in the workflow rank, or I would do the boosted tree model as the results are right on the 1:1 line. 
