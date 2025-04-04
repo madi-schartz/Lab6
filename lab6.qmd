@@ -1,6 +1,6 @@
 ---
 title: "Lab 6: Machine Learning in Hyrdology"
-subtitle: 'Introduction to Statistics in R'
+subtitle: "Ecosystem Science"
 author:
   - name: Madi Schartz
     email: "mmschartz04@gmail.com"
@@ -11,11 +11,26 @@ execute:
 ---
 
 ```{r}
+# Load in the necessary packages 
+
 library(tidyverse)
 library(tidymodels)
 library(powerjoin)
 library(glue)
 library(vip)
 library(baguette)
+
+```
+
+
+```{r}
+# Load in the data
+
+root  <- 'https://gdex.ucar.edu/dataset/camels/file'
+
+# Documentation PDF 
+
+download.file('https://gdex.ucar.edu/dataset/camels/file/camels_attributes_v2.0.pdf', 
+              'data/camels_attributes_v2.0.pdf')
 ```
 
