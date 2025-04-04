@@ -304,6 +304,26 @@ rank_results(wf, rank_metric = "rsq", select_best = TRUE)
 
 ## Question 3: Your Turn!
 
+# Build a xgboost (engine) regression (mode) model using boost_tree 
+```{r}
+
+xgBoost_model <- boost_tree(mode = "regression",
+                            trees = 1000) |>
+  set_engine('xgboost')
+
+```
+
+# Build a neural network model using the nnet engine from the baguette package using the bag_mlp function
+
+```{r}
+
+NeuralNet_Model <- bag_mlp(mode = "regression") |>
+  set_engine('nnet')
+
+```
+
+# Add this to the above workflow
+
 ```{r}
 
 ```
