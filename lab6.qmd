@@ -371,3 +371,68 @@ autoplot(wf)
 ## Which of the 4 models would you move forward with?
 
 I would probably move forward with either the random forest model since it was outperforming the linear regression model in the workflow rank, or I would do the boosted tree model as the results are right on the 1:1 line. 
+
+# Question 4 : Build your own
+
+## Data Splitting 
+
+```{r}
+
+# set a seed for reproducible
+
+set.seed(123)
+
+# Create an initial split with 75% used for training and 25% for testing
+
+resample_split <- initial_split(camels, prop = 0.75)
+
+# Extract your training and testing sites
+
+train_camels <- training(resample_split)
+glimpse(train_camels)
+
+test_camels <- testing(resample_split)
+glimpse(test_camels)
+
+# Build a 10-fold CV dataset as well
+
+cv_folds <- vfold_cv(train_camels, v = 10)
+
+cv_folds
+
+```
+
+## Recipe
+
+```{r}
+
+#Define a formula you want to use to predict logQmean
+
+formula <- logQmean ~ p_mean + aridity + high_prec_dur
+
+#Describe in words why you are choosing the formula you are. Consult the downloaded PDF for the data to help you make this decision.
+
+# I chose to create a formula using these three variables since we have used them in all of the questions prior and I feel as though they are representative of factors that deals with daily discharge and precipitation. 
+
+#Build a recipe that you feel handles the predictors chosen well
+
+# Create a recipe for the formula 
+
+rec <- recipe(logQmean ~ aridity + p_mean + high_prec_dur, data = camels_train) %>%
+  # Log transform the predictor variables 
+  step_log(all_predictors()) %>%
+  # Add an interaction term 
+  step_interact(terms = ~ aridity:p_mean + aridity:high_prec_dur + p_mean:high_prec_dur) %>%
+  # Drop any rows with missing values in the predictors and outcome
+  step_naomit(all_predictors(), all_outcomes())
+
+# Prep
+
+prepared_rec <- prep(rec, training = camels_train)
+
+# Bake
+
+test_data <- bake(prepared_rec, new_data = NULL)
+
+```
+
