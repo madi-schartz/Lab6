@@ -22,6 +22,7 @@ library(glue)
 library(vip)
 library(baguette)
 library(ggplot2)
+library(ggpubr)
 
 ```
 
@@ -99,6 +100,8 @@ p2 <- ggplot(data = camels, aes(x = gauge_lon, y = gauge_lat)) +
   ggthemes::theme_map()
 
 ggarrange(p1, p2, ncol = 2)
+
+
 ```
 
 
@@ -291,16 +294,6 @@ ggplot(lm_data, aes(x = logQmean, y = .pred, colour = aridity)) +
 
 ```
 
-## A Workflowset approach
-
-```{r}
-wf <- workflow_set(list(rec), list(lm_model, rf_model)) %>%
-  workflow_map('fit_resamples', resamples = camels_cv) 
-
-autoplot(wf)
-
-rank_results(wf, rank_metric = "rsq", select_best = TRUE)
-```
 
 # Question 3: Your Turn!
 
@@ -362,8 +355,6 @@ ggplot(NeuralNet_Model_wf, aes(x = logQmean, y = .pred, colour = aridity)) +
   geom_point() +
   geom_abline() +
   theme_linedraw()
-
-autoplot(wf)
 
 
 ```
