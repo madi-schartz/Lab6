@@ -164,7 +164,7 @@ ggplot(camels, aes(x = aridity, y = p_mean)) +
 
 ```{r}
 
-# set a seed for reproductability
+# Start by splitting the data 
 
 set.seed(123)
 
@@ -196,7 +196,7 @@ rec <-  recipe(logQmean ~ aridity + p_mean, data = camels_train) %>%
   # Drop any rows with missing values in the pred
   step_naomit(all_predictors(), all_outcomes())
 
-# Naive base lm approach 
+## Naive base lm approach 
 
 # Prepare the data
 baked_data <- prep(rec, camels_train) |> 
@@ -216,7 +216,11 @@ test_data$lm_pred <- predict(lm_base, newdata = test_data)
 
 ```{r}
 
+# Evaluate model using metrics function 
+
 metrics(test_data, truth = logQmean, estimate = lm_pred)
+
+# Creating the linear model 
 
 ggplot(test_data, aes(x = logQmean, y = lm_pred, colour = aridity)) +
   # Apply a gradient color scale
@@ -255,6 +259,52 @@ summary(extract_fit_engine(lm_wf))$coefficients
 
 # From the base implementation
 summary(lm_base)$coefficients
+
+```
+
+## Making Predictions 
+
+```{r}
+
+# predictions using augment 
+
+lm_data <- augment(lm_wf, new_data = camels_test)
+dim(lm_data)
+
+```
+
+## Model Evaluation : Statistical and Visual
+
+```{r}
+
+# use metrics function to extract metrics
+
+metrics(lm_data, truth = logQmean, estimate = .pred)
+
+# create scatter plot of the observed vs predicted values, colored by aridity, to visualize the model performance.
+
+ggplot(lm_data, aes(x = logQmean, y = .pred, colour = aridity)) +
+  scale_color_viridis_c() +
+  geom_point() +
+  geom_abline() +
+  theme_linedraw()
+
+```
+
+## A Workflowset approach
+
+```{r}
+wf <- workflow_set(list(rec), list(lm_model, rf_model)) %>%
+  workflow_map('fit_resamples', resamples = camels_cv) 
+
+autoplot(wf)
+
+rank_results(wf, rank_metric = "rsq", select_best = TRUE)
+```
+
+## Question 3: Your Turn!
+
+```{r}
 
 ```
 
