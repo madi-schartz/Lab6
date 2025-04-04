@@ -71,7 +71,7 @@ camels <- power_full_join(camels ,by = 'gauge_id')
 
 ```{r}
 
-# Map of the sites
+# Map of q mean of the sites
 
 ggplot(data = camels, aes(x = gauge_lon, y = gauge_lat)) +
   borders("state", colour = "gray50") +
@@ -79,6 +79,101 @@ ggplot(data = camels, aes(x = gauge_lon, y = gauge_lat)) +
   scale_color_gradient(low = "lightblue", high = "darkblue") +
   ggthemes::theme_map()
 
+# Map using aridity and p_mean of the sites
 
+ggplot(data = camels, aes(x = gauge_lon, y = gauge_lat)) +
+  borders("state", colour = "gray50") +
+  geom_point(aes(color = p_mean)) +
+  scale_color_gradient(low = "lightpink", high = "darkred") +
+  ggthemes::theme_map()
+
+```
+
+## Model Preperation 
+
+```{r}
+
+# Initial analysis of the three variables
+
+camels |> 
+  select(aridity, p_mean, q_mean) |> 
+  drop_na() |> 
+  cor()
+
+## Visual EDA
+
+# Create a scatter plot of aridity vs rainfall
+ggplot(camels, aes(x = aridity, y = p_mean)) +
+  # Add points colored by mean flow
+  geom_point(aes(color = q_mean)) +
+  # Add a linear regression line
+  geom_smooth(method = "lm", color = "red", linetype = 2) +
+  # Apply the viridis color scale
+  scale_color_viridis_c() +
+  # Add a title, axis labels, and theme (w/ legend on the bottom)
+  theme_linedraw() + 
+  theme(legend.position = "bottom") + 
+  labs(title = "Aridity vs Rainfall vs Runnoff", 
+       x = "Aridity", 
+       y = "Rainfall",
+       color = "Mean Flow")
+
+# Test transformation 
+
+ggplot(camels, aes(x = aridity, y = p_mean)) +
+  geom_point(aes(color = q_mean)) +
+  geom_smooth(method = "lm") +
+  scale_color_viridis_c() +
+  # Apply log transformations to the x and y axes
+  scale_x_log10() + 
+  scale_y_log10() +
+  theme_linedraw() +
+  theme(legend.position = "bottom") + 
+  labs(title = "Aridity vs Rainfall vs Runnoff", 
+       x = "Aridity", 
+       y = "Rainfall",
+       color = "Mean Flow")
+
+# Visualize log transform may benefit q_mean data 
+
+ggplot(camels, aes(x = aridity, y = p_mean)) +
+  geom_point(aes(color = q_mean)) +
+  geom_smooth(method = "lm") +
+  # Apply a log transformation to the color scale
+  scale_color_viridis_c(trans = "log") +
+  scale_x_log10() + 
+  scale_y_log10() +
+  theme_linedraw() +
+  theme(legend.position = "bottom",
+        # Expand the legend width ...
+        legend.key.width = unit(2.5, "cm"),
+        legend.key.height = unit(.5, "cm")) + 
+  labs(title = "Aridity vs Rainfall vs Runnoff", 
+       x = "Aridity", 
+       y = "Rainfall",
+       color = "Mean Flow") 
+
+```
+
+## Model Building 
+
+```{r}
+
+# set a seed for reproductability
+
+set.seed(123)
+
+# Bad form to perform simple transformations on the outcome variable within a recipe. So, we'll do it here.
+
+camels <- camels |> 
+  mutate(logQmean = log(q_mean))
+
+# Generate the split
+
+camels_split <- initial_split(camels, prop = 0.8)
+camels_train <- training(camels_split)
+camels_test  <- testing(camels_split)
+
+camels_cv <- vfold_cv(camels_train, v = 10)
 ```
 
