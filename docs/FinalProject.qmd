@@ -1,0 +1,37 @@
+---
+title: "FinalProject"
+format: html
+---
+
+# Load in necessary packages
+```{r}
+library(tidyverse)
+library(dataRetrieval)
+library(ggplot2)
+library(plotly)
+library(lubridate)
+library(ggpubr)
+library(plotly)
+library(dplyr)
+
+```
+
+# Download Data + Clean it 
+
+```{r}
+
+# Protected data from CCC
+
+
+
+# Unprotected data from CCC
+
+
+```
+
+# Graph Visual 
+
+```{r}
+
+```
+
