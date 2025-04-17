@@ -1,7 +1,8 @@
 project:
-  title: "Lab 6: Machine Learning in Hyrdology"
+  title: "Lab 6: Machine Learning in Hydrology"
+  title: "Lab 8: Machine Learning The Whole Game Plan"
   output-dir: docs
   type: website
 format:
-   html:
+  html:
     self-contained: true
